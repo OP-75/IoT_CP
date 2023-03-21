@@ -1,28 +1,6 @@
-/*************************************************************
-  Blynk is a platform with iOS and Android apps to control
-  ESP32, Arduino, Raspberry Pi and the likes over the Internet.
-  You can easily build mobile and web interfaces for any
-  projects by simply dragging and dropping widgets.
 
-    Downloads, docs, tutorials: https://www.blynk.io
-    Sketch generator:           https://examples.blynk.cc
-    Blynk community:            https://community.blynk.cc
-    Follow us:                  https://www.fb.com/blynkapp
-                                https://twitter.com/blynk_app
+// the button in the blynk app tell the current state of the lock/mute
 
-  Blynk library is licensed under MIT license
-  This example code is in public domain.
-
- *************************************************************
-  This example runs directly on ESP8266 chip.
-
-  NOTE: This requires ESP8266 support package:
-    https://github.com/esp8266/Arduino
-
-  Please be sure to select the right ESP8266 module
-  in the Tools -> Board menu!
-
- *************************************************************/
 
 /* Comment this out to disable prints and save space */
 #define BLYNK_PRINT Serial
@@ -65,10 +43,18 @@ void setup()
 {
   // Debug console
   Serial.begin(9600);
-
+  Serial.println("Serial.begin done");
   // Setup WiFi network
   // WiFi.config(device_ip, gateway_ip, subnet_mask);
   WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) 
+          {
+            delay(500);
+            Serial.print(".");
+          }
+  Serial.println("Connected to wifi");
+
+
 
   pinMode(trigPin, OUTPUT);
   pinMode(buzzer, OUTPUT);
@@ -80,6 +66,7 @@ void setup()
   while (Blynk.connect() == false) {
    Serial.print(".");
   }
+  Serial.println("Done");
 
 }
 
@@ -92,7 +79,11 @@ BLYNK_WRITE(V0)
 {
    if(param.asInt()==0){
     digitalWrite(solenoid_lock, LOW);
+    Serial.println("Door Locked!");
     isUnlocked=false;
+    count=0;
+    ringCount=0;
+    delay(2000);
    }
     
 
@@ -100,6 +91,9 @@ BLYNK_WRITE(V0)
    else if(param.asInt()==1){
     digitalWrite(solenoid_lock, HIGH);
     isUnlocked = true;
+
+    Serial.println("Door unlocked!");
+    delay(2000);
    }
 }
 
@@ -113,8 +107,11 @@ BLYNK_WRITE(V1)
    }
     
 
-
-   else if(param.asInt()==1) turnOff=true;;
+   else if(param.asInt()==1){ 
+    turnOff=true;
+    count=0;
+    ringCount=0;
+   }
 
 }
 
@@ -128,6 +125,8 @@ void loop()
 
 
    // Clears the trigPin
+  delay(1);
+
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   // Sets the trigPin on HIGH state for 10 micro seconds
@@ -148,25 +147,33 @@ void loop()
     count++;
     delay(100);
   }
-  else count=0;
+  else{
+  count=0;
+  ringCount=0;
+  }
+
 
 
   if(count>=30 && !turnOff && ringCount<3 && !isUnlocked){
-    tone(buzzer, 3000, 3000);
+    tone(buzzer, 2000);
     ringCount++;
+    delay(2000);
+    noTone(buzzer);
     delay(2000);
   }
 
   else if(count>=30 && !turnOff && ringCount>=3 && !isUnlocked){
-    Blynk.logEvent("someone_at_door","Someone is at the door -- nodemcu");
+    
+   if(ringCount==3) Blynk.logEvent("someone_at_door","Someone is at the door -- nodemcu");
     ringCount++;
     noTone(buzzer);
   }
 
   else{
     noTone(buzzer);
-    ringCount=0;
+
   }
+ 
 
 
 
