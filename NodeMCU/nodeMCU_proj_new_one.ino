@@ -36,7 +36,7 @@ bool turnOff=false, isUnlocked=false;
 int distance,count=0, ringCount=0, duration=0;
 
 
-int buzzer=D3, solenoid_lock=D4;
+int buzzer=D0, solenoid_lock=D4;
 int trigPin=D1, echoPin=D2;
 
 void setup()
@@ -53,6 +53,7 @@ void setup()
             Serial.print(".");
           }
   Serial.println("Connected to wifi");
+  
 
 
 
@@ -79,8 +80,8 @@ BLYNK_WRITE(V0)
 {
    if(param.asInt()==0){
     digitalWrite(solenoid_lock, LOW);
-    Serial.println("Door Locked!");
-    isUnlocked=false;
+    Serial.println("Door unocked!");
+    isUnlocked=true;
     count=0;
     ringCount=0;
     delay(2000);
@@ -90,9 +91,9 @@ BLYNK_WRITE(V0)
 
    else if(param.asInt()==1){
     digitalWrite(solenoid_lock, HIGH);
-    isUnlocked = true;
+    isUnlocked = false;
 
-    Serial.println("Door unlocked!");
+    Serial.println("Door locked!");
     delay(2000);
    }
 }
@@ -141,6 +142,17 @@ void loop()
   Serial.print("Distance: ");
   Serial.println(distance);
 
+  // Serial.print("count: ");
+  // Serial.println(count);
+  // Serial.print("muted: ");
+  // Serial.println(turnOff); 
+  
+  // Serial.print("ringcount: "); 
+  // Serial.println(ringCount);
+
+  // Serial.print("isunlocked: "); 
+  // Serial.println(ringCount);
+
 
 
   if(distance<50){ 
@@ -156,6 +168,7 @@ void loop()
 
   if(count>=30 && !turnOff && ringCount<3 && !isUnlocked){
     tone(buzzer, 2000);
+    Serial.print("buzzing ");
     ringCount++;
     delay(2000);
     noTone(buzzer);
